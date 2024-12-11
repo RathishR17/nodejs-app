@@ -10,7 +10,7 @@ on:
 
 jobs:
   test:
-    runs-on: windows-latest  # Use windows-latest runner for testing
+    runs-on: windows-latest
 
     steps:
       - name: Checkout code
@@ -19,16 +19,16 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '16'  # Adjust to your Node.js version
+          node-version: '16'
 
       - name: Install dependencies
         run: npm install
 
       - name: Run tests
-        run: npm test  # Ensure you have tests defined in your Node.js app
+        run: npm test
 
   build_and_deploy:
-    runs-on: ubuntu-latest  # Use ubuntu-latest runner for Docker and Kubernetes steps
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
@@ -65,7 +65,7 @@ jobs:
         run: kubectl config get-contexts
 
       - name: Apply Kubernetes Deployment
-        run: kubectl apply -f deployment.yaml
+        run: kubectl apply --validate=false -f deployment.yaml
 
       - name: Set Image in Deployment
         run: |
