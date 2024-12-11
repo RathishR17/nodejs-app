@@ -3,14 +3,14 @@ name: CI/CD Pipeline
 on:
   push:
     branches:
-      - main  # Trigger on push to main branch
+      - main
   pull_request:
     branches:
-      - main  # Trigger on PR to main branch
+      - main
 
 jobs:
   test:
-    runs-on: windows-latest  # Use windows-latest runner for GitHub Actions
+    runs-on: windows-latest
 
     steps:
       - name: Checkout code
@@ -19,16 +19,16 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '16'  # Adjust to your Node.js version
+          node-version: '16'
 
       - name: Install dependencies
         run: npm install
 
       - name: Run tests
-        run: npm test  # Ensure you have tests defined in your Node.js app
+        run: npm test
 
   build_and_deploy:
-    runs-on: windows-latest  # Use windows-latest runner for Docker and Kubernetes steps
+    runs-on: windows-latest
 
     steps:
       - name: Checkout code
@@ -42,12 +42,12 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/my-app:$GITHUB_SHA .
-          docker tag ${{ secrets.DOCKER_USERNAME }}/my-app:$GITHUB_SHA ${{ secrets.DOCKER_USERNAME }}/my-app:latest
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/my-app:${{ github.sha }} .
+          docker tag ${{ secrets.DOCKER_USERNAME }}/my-app:${{ github.sha }} ${{ secrets.DOCKER_USERNAME }}/my-app:latest
 
       - name: Push Docker image to Docker Hub
         run: |
-          docker push ${{ secrets.DOCKER_USERNAME }}/my-app:$GITHUB_SHA
+          docker push ${{ secrets.DOCKER_USERNAME }}/my-app:${{ github.sha }}
           docker push ${{ secrets.DOCKER_USERNAME }}/my-app:latest
 
       - name: Set up kubectl
@@ -62,15 +62,15 @@ jobs:
 
       - name: Deploy to Kubernetes
         run: |
-          kubectl set image deployment/my-app my-app=${{ secrets.DOCKER_USERNAME }}/my-app:$GITHUB_SHA
+          kubectl set image deployment/my-app my-app=${{ secrets.DOCKER_USERNAME }}/my-app:${{ github.sha }}
           kubectl rollout status deployment/my-app
 
       - name: Notify on success (Slack)
         if: success()
         run: |
-          curl -X POST -H 'Content-type: application/json' --data '{"text":"Deployment succeeded: my-app:$GITHUB_SHA"}' ${{ secrets.SLACK_WEBHOOK_URL }}
+          curl -X POST -H 'Content-type: application/json' --data '{"text":"Deployment succeeded: my-app:${{ github.sha }}"}' ${{ secrets.SLACK_WEBHOOK_URL }}
 
       - name: Notify on failure (Slack)
         if: failure()
         run: |
-          curl -X POST -H 'Content-type: application/json' --data '{"text":"Deployment failed: my-app:$GITHUB_SHA"}' ${{ secrets.SLACK_WEBHOOK_URL }}
+          curl -X POST -H 'Content-type: application/json' --data '{"text":"Deployment failed: my-app:${{ github.sha }}"}' ${{ secrets.SLACK_WEBHOOK_URL }}
