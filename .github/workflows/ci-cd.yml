@@ -10,7 +10,7 @@ on:
 
 jobs:
   test:
-    runs-on: windows-latest  # Use windows-latest runner for GitHub Actions
+    runs-on: windows-latest  # Use windows-latest runner for testing
 
     steps:
       - name: Checkout code
@@ -50,21 +50,27 @@ jobs:
           docker push ${{ secrets.DOCKER_USERNAME }}/my-app:${{ github.sha }}
           docker push ${{ secrets.DOCKER_USERNAME }}/my-app:latest
 
-      - name: Set up kubectl
+      - name: Install kubectl
         run: |
           curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl"
-          chmod +x ./kubectl
-          sudo mv ./kubectl /usr/local/bin/kubectl
+          chmod +x kubectl
+          sudo mv kubectl /usr/local/bin/
 
       - name: Configure kubectl
         run: |
           echo "${{ secrets.KUBE_CONFIG }}" > $GITHUB_WORKSPACE/kubeconfig.yaml
           export KUBECONFIG=$GITHUB_WORKSPACE/kubeconfig.yaml
 
-      - name: Deploy to Kubernetes
+      - name: Verify Kubernetes Context
+        run: kubectl config get-contexts
+
+      - name: Apply Kubernetes Deployment
+        run: kubectl apply -f deployment.yaml
+
+      - name: Set Image in Deployment
         run: |
-          kubectl set image deployment/my-app my-app=${{ secrets.DOCKER_USERNAME }}/my-app:${{ github.sha }}
-          kubectl rollout status deployment/my-app
+          kubectl set image deployment/nodejs-app nodejs-app=${{ secrets.DOCKER_USERNAME }}/my-app:${{ github.sha }}
+          kubectl rollout status deployment/nodejs-app
 
       - name: Notify on success (Slack)
         if: success()
