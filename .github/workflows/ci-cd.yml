@@ -10,7 +10,7 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest  # GitHub Actions runner
+    runs-on: windows-latest  # Use windows-latest runner for GitHub Actions (or "windows-2019" if needed)
 
     steps:
       - name: Checkout code
@@ -28,7 +28,7 @@ jobs:
         run: npm test  # Ensure you have tests defined in your Node.js app
 
   build_and_deploy:
-    runs-on: ubuntu-latest  # GitHub Actions runner
+    runs-on: windows-latest  # GitHub Actions runner
 
     steps:
       - name: Checkout code
@@ -58,12 +58,12 @@ jobs:
         with:
           version: 'v1.23.0'
 
-      - name: Configure kubectl
+      - name: Configure kubectl (PowerShell Syntax)
         run: |
           echo "${{ secrets.KUBE_CONFIG }}" > kubeconfig.yaml
-          $env:KUBECONFIG = "kubeconfig.yaml"
+          $env:KUBECONFIG = "kubeconfig.yaml"  # PowerShell syntax for setting environment variable
 
-      - name: Deploy to Kubernetes
+      - name: Deploy to Kubernetes (PowerShell Syntax)
         run: |
           kubectl set image deployment/my-app my-app=${{ secrets.DOCKER_USERNAME }}/my-app:$GITHUB_SHA
           kubectl rollout status deployment/my-app
@@ -77,3 +77,4 @@ jobs:
         if: failure()
         run: |
           curl -X POST -H 'Content-type: application/json' --data '{"text":"Deployment failed: my-app:$GITHUB_SHA"}' ${{ secrets.SLACK_WEBHOOK_URL }}
+
