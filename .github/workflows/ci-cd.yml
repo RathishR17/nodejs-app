@@ -10,7 +10,7 @@ on:
 
 jobs:
   test:
-    runs-on: windows-latest
+    runs-on: windows-latest  # Use windows-latest runner for GitHub Actions
 
     steps:
       - name: Checkout code
@@ -19,16 +19,16 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '16'
+          node-version: '16'  # Adjust to your Node.js version
 
       - name: Install dependencies
         run: npm install
 
       - name: Run tests
-        run: npm test
+        run: npm test  # Ensure you have tests defined in your Node.js app
 
   build_and_deploy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest  # Use ubuntu-latest runner for Docker and Kubernetes steps
 
     steps:
       - name: Checkout code
@@ -51,14 +51,15 @@ jobs:
           docker push ${{ secrets.DOCKER_USERNAME }}/my-app:latest
 
       - name: Set up kubectl
-        uses: azure/setup-kubectl@v1
-        with:
-          version: 'v1.23.0'
+        run: |
+          curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl"
+          chmod +x ./kubectl
+          sudo mv ./kubectl /usr/local/bin/kubectl
 
       - name: Configure kubectl
         run: |
-          echo "${{ secrets.KUBE_CONFIG }}" > $env:GITHUB_WORKSPACE\kubeconfig.yaml
-          $env:KUBECONFIG = "$env:GITHUB_WORKSPACE\kubeconfig.yaml"
+          echo "${{ secrets.KUBE_CONFIG }}" > $GITHUB_WORKSPACE/kubeconfig.yaml
+          export KUBECONFIG=$GITHUB_WORKSPACE/kubeconfig.yaml
 
       - name: Deploy to Kubernetes
         run: |
